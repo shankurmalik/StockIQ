@@ -417,23 +417,17 @@ def trade_setup(price, atr, rsi, ema9, ema21):
     resist  = round(price + atr * 0.8, 1)
     support = round(price - atr * 0.8, 1)
     bias    = "Bullish" if ema9 > ema21 else "Bearish"
-
     if bias == "Bullish":
-        trade     = "BUY"
-        entry     = resist                        # enter above resistance
-        target    = round(price + atr * 1.5, 1)  # target is higher
-        sl        = round(support - atr * 0.3, 1) # stop loss below support
+        trade  = "BUY"
+        entry  = resist
+        target = round(price + atr * 1.5, 1)
+        sl     = round(support - atr * 0.3, 1)
     else:
-        trade     = "SELL / AVOID"
-        entry     = support                       # enter below support
-        target    = round(price - atr * 1.5, 1)  # target is lower
-        sl        = round(resist + atr * 0.3, 1)  # stop loss above resistance
-
-    return {
-        "resist": resist, "support": support,
-        "bias": bias, "trade": trade,
-        "entry": entry, "target": target, "sl": sl
-    }
+        trade  = "SELL / AVOID"
+        entry  = support
+        target = round(price - atr * 1.5, 1)
+        sl     = round(resist + atr * 0.3, 1)
+    return {"resist":resist,"support":support,"bias":bias,"trade":trade,"entry":entry,"target":target,"sl":sl}
 
 
 def price_chart(hist, sym, tf="3mo"):
@@ -725,15 +719,15 @@ with tabs[1]:
                 </div>""", unsafe_allow_html=True)
 
             with vc3:
-              bcol = "#00d09c" if setup["bias"]=="Bullish" else "#ff4757"
+                bcol = "#00d09c" if setup["bias"]=="Bullish" else "#ff4757"
                 ecol = "#00d09c" if setup["trade"]=="BUY" else "#ff4757"
                 st.markdown(f"""<div class='trade-box'>
 <span style='color:#8892b0;font-size:11px;'>TRADE SETUP ENGINE</span>
 <div style='color:{bcol};font-weight:700;margin:6px 0;'>Bias: {setup["bias"]} → {setup["trade"]}</div>
-<div style='color:{ecol};'>Entry: ₹{setup["entry"]}</div>
-Target: ₹{setup["target"]}
-Stop Loss: ₹{setup["sl"]}
-<div style='color:#8892b0;font-size:11px;margin-top:6px;'>Resistance: ₹{setup["resist"]} | Support: ₹{setup["support"]}</div>
+<div style='color:{ecol};'>Entry: Rs {setup["entry"]}</div>
+Target: Rs {setup["target"]}
+Stop Loss: Rs {setup["sl"]}
+<div style='color:#8892b0;font-size:11px;margin-top:6px;'>Resistance: Rs {setup["resist"]} | Support: Rs {setup["support"]}</div>
 </div>""", unsafe_allow_html=True)
 
             st.divider()
