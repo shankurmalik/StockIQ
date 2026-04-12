@@ -157,35 +157,83 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── NSE company list — loaded live from NSE official database ─────────────────
-@st.cache_data(ttl=86400)
-def load_nse_universe():
+# ── Live NSE search via Yahoo Finance ────────────────────────────────────────
+def live_search_nse(query):
+    """Search NSE stocks live using Yahoo Finance screener API"""
+    if not query or len(query) < 1:
+        return []
     try:
-        url = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
-        headers = {"User-Agent": "Mozilla/5.0"}
         import requests
-        r = requests.get(url, headers=headers, timeout=10)
-        from io import StringIO
-        df = pd.read_csv(StringIO(r.text))
-        df.columns = df.columns.str.strip()
-        result = {}
-        for _, row in df.iterrows():
-            sym  = str(row["SYMBOL"]).strip()
-            name = str(row["NAME OF COMPANY"]).strip()
-            result[sym] = name
-        return result
-    except:
-        return {
-            "RELIANCE":"Reliance Industries","TCS":"Tata Consultancy Services",
-            "INFY":"Infosys","HDFCBANK":"HDFC Bank","ICICIBANK":"ICICI Bank",
-            "SBIN":"State Bank of India","TATAMOTORS":"Tata Motors",
-            "WIPRO":"Wipro","ZOMATO":"Zomato","ADANIENT":"Adani Enterprises",
-            "SUNPHARMA":"Sun Pharmaceutical","AXISBANK":"Axis Bank",
-            "BAJFINANCE":"Bajaj Finance","KOTAKBANK":"Kotak Mahindra Bank",
-            "HCLTECH":"HCL Technologies","MARUTI":"Maruti Suzuki",
+        url = "https://query2.finance.yahoo.com/v1/finance/search"
+        params = {
+            "q": query + " NSE",
+            "lang": "en-IN",
+            "region": "IN",
+            "quotesCount": 10,
+            "newsCount": 0,
+            "enableFuzzyQuery": True,
+            "quotesQueryId": "tss_match_phrase_query",
         }
+        headers = {"User-Agent": "Mozilla/5.0"}
+        r = requests.get(url, params=params, headers=headers, timeout=5)
+        data = r.json()
+        results = []
+        for item in data.get("quotes", []):
+            sym_full = item.get("symbol", "")
+            name = item.get("longname") or item.get("shortname") or ""
+            exch = item.get("exchange", "")
+            # Only NSE/BSE stocks
+            if sym_full.endswith(".NS") or exch in ["NSI", "BSE"]:
+                sym = sym_full.replace(".NS", "").replace(".BO", "")
+                if sym and name:
+                    results.append((sym, name))
+        return results[:8]
+    except:
+        return []
 
-NSE = load_nse_universe()
+# Small fallback dict for when there's no internet
+NSE = {
+    "RELIANCE":"Reliance Industries","TCS":"Tata Consultancy Services",
+    "INFY":"Infosys","HDFCBANK":"HDFC Bank","ICICIBANK":"ICICI Bank",
+    "SBIN":"State Bank of India","TATAMOTORS":"Tata Motors",
+    "WIPRO":"Wipro","ZOMATO":"Zomato","ADANIENT":"Adani Enterprises",
+    "SUNPHARMA":"Sun Pharmaceutical","AXISBANK":"Axis Bank",
+    "BAJFINANCE":"Bajaj Finance","KOTAKBANK":"Kotak Mahindra Bank",
+    "HCLTECH":"HCL Technologies","MARUTI":"Maruti Suzuki",
+    "TITAN":"Titan Company","NESTLEIND":"Nestle India",
+    "BHARTIARTL":"Bharti Airtel","LTIM":"LTIMindtree",
+    "INDIGO":"IndiGo Airlines","ITC":"ITC","ONGC":"ONGC",
+    "COALINDIA":"Coal India","NTPC":"NTPC","POWERGRID":"Power Grid",
+    "IRCTC":"Indian Railway Catering","HAL":"Hindustan Aeronautics",
+    "BEL":"Bharat Electronics","TATAPOWER":"Tata Power",
+    "TATASTEEL":"Tata Steel","JSWSTEEL":"JSW Steel",
+    "HINDALCO":"Hindalco Industries","VEDL":"Vedanta",
+    "DRREDDY":"Dr Reddy's","CIPLA":"Cipla","LUPIN":"Lupin",
+    "DIVISLAB":"Divi's Laboratories","AUROPHARMA":"Aurobindo Pharma",
+    "APOLLOHOSP":"Apollo Hospitals","MAXHEALTH":"Max Healthcare",
+    "BAJAJFINSV":"Bajaj Finserv","MUTHOOTFIN":"Muthoot Finance",
+    "PAYTM":"Paytm","NYKAA":"Nykaa","DELHIVERY":"Delhivery",
+    "TRENT":"Trent","DIXON":"Dixon Technologies",
+    "POLYCAB":"Polycab India","HAVELLS":"Havells India",
+    "VOLTAS":"Voltas","WHIRLPOOL":"Whirlpool India",
+    "JUBLFOOD":"Jubilant Foodworks","INDIAMART":"IndiaMart",
+    "NAUKRI":"Info Edge Naukri","IEX":"Indian Energy Exchange",
+    "ADANIPORTS":"Adani Ports","DLF":"DLF","GODREJPROP":"Godrej Properties",
+    "OBEROIRLTY":"Oberoi Realty","SOBHA":"Sobha",
+    "KWIL":"Kwality Walls India","DMART":"Avenue Supermarts DMart",
+    "RAYMOND":"Raymond","MANYAVAR":"Vedant Fashions Manyavar",
+    "IDEA":"Vodafone Idea","RAILTEL":"RailTel Corporation",
+    "RVNL":"Rail Vikas Nigam","IRFC":"Indian Railway Finance",
+    "NBCC":"NBCC India","SJVN":"SJVN","NHPC":"NHPC",
+    "CANBK":"Canara Bank","BANKBARODA":"Bank of Baroda",
+    "PNB":"Punjab National Bank","UNIONBANK":"Union Bank",
+    "FEDERALBNK":"Federal Bank","IDFCFIRSTB":"IDFC First Bank",
+    "BANDHANBNK":"Bandhan Bank","RBLBANK":"RBL Bank",
+    "BAJAJ-AUTO":"Bajaj Auto","HEROMOTOCO":"Hero MotoCorp",
+    "EICHERMOT":"Eicher Motors","TVSMOTORS":"TVS Motor",
+    "MARUTI":"Maruti Suzuki","ESCORTS":"Escorts Kubota",
+    "MRF":"MRF","CEATLTD":"CEAT","BALKRISIND":"Balkrishna Industries",
+}
 
 SECTORS = {
     "IT":       ["TCS","INFY","WIPRO","HCLTECH","TECHM","LTIM","MPHASIS","PERSISTENT","TATAELXSI","KPITTECH","HAPPSTMNDS"],
@@ -545,26 +593,42 @@ with tabs[0]:
 with tabs[1]:
     st.markdown("### 🔍 Search Any Indian Stock")
 
-    search_q = st.text_input("", placeholder="Type company name or symbol... e.g. 'Tata', 'Rel', 'INFY', 'kwa'", label_visibility="collapsed", key="main_search")
+    if "selected_sym" not in st.session_state:
+        st.session_state["selected_sym"] = None
+    if "last_search" not in st.session_state:
+        st.session_state["last_search"] = ""
 
-    selected_sym = None
+    search_q = st.text_input(
+        "", placeholder="Type any company name: 'Kwality', 'Tata', 'Zomato', 'HDFC'...",
+        label_visibility="collapsed", key="main_search"
+    )
 
-    if search_q and len(search_q) >= 1:
-        suggestions = search_nse(search_q)
+    if search_q != st.session_state["last_search"]:
+        st.session_state["last_search"] = search_q
+        st.session_state["selected_sym"] = None
+
+    selected_sym = st.session_state.get("selected_sym")
+
+    if search_q and len(search_q) >= 2 and not selected_sym:
+        with st.spinner("Searching..."):
+            suggestions = live_search_nse(search_q)
         if suggestions:
-            st.markdown("<p class='section-hdr'>Suggestions</p>", unsafe_allow_html=True)
-            cols = st.columns(2)
-            for i, (sym, name) in enumerate(suggestions):
-                with cols[i % 2]:
-                    label = f"**{name}**  `{sym}`"
-                    if st.button(label, key=f"sug_{sym}", use_container_width=True):
+            st.markdown("<p class='section-hdr'>Select a company</p>", unsafe_allow_html=True)
+            for sym, name in suggestions:
+                c1, c2 = st.columns([5, 1])
+                with c1:
+                    st.markdown(f"<div style='padding:6px 0;color:#cdd6f4;font-size:14px;'><b>{name}</b> &nbsp;<span style='color:#8892b0;font-size:12px;'>{sym}</span></div>", unsafe_allow_html=True)
+                with c2:
+                    if st.button("Select", key=f"sel_{sym}"):
                         st.session_state["selected_sym"] = sym
+                        st.session_state["last_search"] = search_q
                         st.rerun()
         else:
-            st.warning("No results found. Try another name.")
-
-    if "selected_sym" in st.session_state and st.session_state["selected_sym"]:
-        selected_sym = st.session_state["selected_sym"]
+            st.warning("No results found. Try typing differently or use the exact NSE symbol.")
+            if search_q and st.button(f"Try '{search_q.upper()}' as direct NSE symbol"):
+                st.session_state["selected_sym"] = search_q.upper()
+                st.session_state["last_search"] = search_q
+                st.rerun()
 
     if selected_sym:
         st.divider()
