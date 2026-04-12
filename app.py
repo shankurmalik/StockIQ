@@ -725,14 +725,14 @@ with tabs[1]:
                 </div>""", unsafe_allow_html=True)
 
             with vc3:
-               bcol = "#00d09c" if setup["bias"]=="Bullish" else "#ff4757"
+              bcol = "#00d09c" if setup["bias"]=="Bullish" else "#ff4757"
                 ecol = "#00d09c" if setup["trade"]=="BUY" else "#ff4757"
                 st.markdown(f"""<div class='trade-box'>
 <span style='color:#8892b0;font-size:11px;'>TRADE SETUP ENGINE</span>
 <div style='color:{bcol};font-weight:700;margin:6px 0;'>Bias: {setup["bias"]} → {setup["trade"]}</div>
 <div style='color:{ecol};'>Entry: ₹{setup["entry"]}</div>
-🎯 Target: ₹{setup["target"]}
-🛑 Stop Loss: ₹{setup["sl"]}
+Target: ₹{setup["target"]}
+Stop Loss: ₹{setup["sl"]}
 <div style='color:#8892b0;font-size:11px;margin-top:6px;'>Resistance: ₹{setup["resist"]} | Support: ₹{setup["support"]}</div>
 </div>""", unsafe_allow_html=True)
 
